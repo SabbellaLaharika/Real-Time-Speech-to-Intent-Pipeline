@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  pipeline_service:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+    # Requirement 1: Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: always
+
+# Requirement 10: Justification for model weights can be found in MODEL_CHOICES.md
