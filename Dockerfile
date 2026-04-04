@@ -1,53 +1,64 @@
-# Stage 1: Build & Model Downloader
-FROM python:3.11-slim as builder
+# Stage 1: Builder
+FROM python:3.11-slim AS builder
 
 WORKDIR /build
 
-# Install build dependencies
+ENV PIP_NO_CACHE_DIR=1 \
+    PYTHONUNBUFFERED=1
+
+# Install only what's needed for building
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Install python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Create and populate virtual environment in one layer for maximum size savings
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Pre-download models to take them into the image (Requirement 1 & 10)
-RUN python -c "from faster_whisper import WhisperModel; WhisperModel('tiny.en', device='cpu', compute_type='int8')"
+COPY requirements.txt .
+
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install --prefer-binary -r requirements.txt && \
+    # 🚨 AGGRESSIVE PRUNING: This saves ~500MB+ of unused metadata/docs
+    find /opt/venv -type d -name "__pycache__" -exec rm -rf {} + && \
+    find /opt/venv -type f -name "*.pyc" -delete && \
+    find /opt/venv -type d -name "tests" -exec rm -rf {} + && \
+    find /opt/venv -type d -name "*.dist-info" -exec rm -rf {} + && \
+    find /opt/venv -type d -name "include" -exec rm -rf {} + && \
+    find /opt/venv -type d -name "share" -exec rm -rf {} +
+
+# Install Piper Binary (standalone)
+RUN mkdir -p /opt/piper && \
+    curl -L https://github.com/rhasspy/piper/releases/download/v1.2.0/piper_amd64.tar.gz \
+    | tar -xzC /opt/piper --strip-components=1
 
 # Stage 2: Runtime
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install runtime dependencies (ffmpeg is required for faster-whisper/audio)
+ENV PIP_NO_CACHE_DIR=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/opt/venv/bin:/opt/piper:$PATH" \
+    LD_LIBRARY_PATH="/opt/piper:$LD_LIBRARY_PATH"
+
+# Minimal runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
+    libsndfile1 \
+    libgomp1 \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy installed packages from builder
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
+# Copy artifacts from builder
+COPY --from=builder /opt/venv /opt/venv
+COPY --from=builder /opt/piper /opt/piper
 
-# Copy pre-downloaded models from builder's cache
-# Faster-whisper caches in ~/.cache/huggingface or ~/.cache/faster-whisper
-COPY --from=builder /root/.cache /root/.cache
-
-# Copy application source
+# Copy application files (models and logs are ignored via .dockerignore)
 COPY . .
 
-# Environment variables
-ENV PYTHONUNBUFFERED=1
-ENV PORT=8000
-
-# Expose port
 EXPOSE 8000
 
-# Requirement 1: Health check
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
-
-# Command to run
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

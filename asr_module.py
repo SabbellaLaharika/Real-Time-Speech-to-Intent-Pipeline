@@ -6,8 +6,14 @@ class ASRModule:
     def __init__(self, model_size: str = "tiny.en", device: str = "cpu", compute_type: str = "int8"):
         """
         Requirement 10: Using faster-whisper tiny.en with int8 for optimized latency.
+        Runtime downloading is enabled to keep the Docker image small.
         """
-        self.model = WhisperModel(model_size, device=device, compute_type=compute_type)
+        self.model = WhisperModel(
+            model_size, 
+            device=device, 
+            compute_type=compute_type,
+            download_root="./models"
+        )
 
     def transcribe(self, audio_path: str) -> Tuple[str, float]:
         """

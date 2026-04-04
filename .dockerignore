@@ -2,13 +2,28 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
 .venv/
 venv/
+
 .env
 .git/
 .gitignore
+
+# Models & Large Data (Huge size reducers)
+models/
+.cache/
+*.onnx
+*.json
+
+# Results & Test data
 results/
 temp_*.wav
+test_audio.wav
 test_sample.wav
 downloads/
-.cache/
+
+# Misc
+*.log
+build_log*.txt
+piper_test.tar.gz
