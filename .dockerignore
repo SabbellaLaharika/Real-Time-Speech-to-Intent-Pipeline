@@ -19,7 +19,8 @@ models/
 *.pt
 
 # Results & Test data
-results/
+results/*
+!results/latency_report.json
 temp_*.wav
 test_audio.wav
 test_sample.wav
