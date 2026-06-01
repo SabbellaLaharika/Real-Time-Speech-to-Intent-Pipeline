@@ -27,7 +27,8 @@ wheels/
 ! .env.example
 
 # Project specific
-results/
+results/*
+!results/latency_report.json
 temp_*.wav
 ! test_audio.wav
 build_log*.txt

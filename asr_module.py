@@ -1,12 +1,11 @@
 import time
-from typing import Tuple
+from typing import Tuple, Union, BinaryIO
 from faster_whisper import WhisperModel
 
 class ASRModule:
     def __init__(self, model_size: str = "tiny.en", device: str = "cpu", compute_type: str = "int8"):
         """
         Requirement 10: Using faster-whisper tiny.en with int8 for optimized latency.
-        Runtime downloading is enabled to keep the Docker image small.
         """
         self.model = WhisperModel(
             model_size, 
@@ -15,12 +14,12 @@ class ASRModule:
             download_root="./models"
         )
 
-    def transcribe(self, audio_path: str) -> Tuple[str, float]:
+    def transcribe(self, audio_data: Union[str, BinaryIO]) -> Tuple[str, float]:
         """
         Transcribes audio and returns the text and latency in ms.
         """
         start_time = time.perf_counter()
-        segments, info = self.model.transcribe(audio_path, beam_size=5)
+        segments, info = self.model.transcribe(audio_data, beam_size=5)
         
         # Collect all segments into a single transcription
         text = " ".join([segment.text for segment in segments]).strip()

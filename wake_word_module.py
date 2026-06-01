@@ -1,5 +1,5 @@
 import time
-from typing import Tuple
+from typing import Tuple, BinaryIO
 
 class WakeWordModule:
     def __init__(self, model_name: str = "openwakeword"):
@@ -10,7 +10,7 @@ class WakeWordModule:
         """
         self.model_name = model_name
 
-    def detect(self, audio_path: str) -> Tuple[bool, float]:
+    def detect(self, audio_data: BinaryIO) -> Tuple[bool, float]:
         """
         Mock detection for standard API requests.
         Returns (detected, latency_ms).

@@ -1,8 +1,7 @@
 import time
 import base64
 import os
-import shutil
-import uuid
+import io
 from typing import Dict, Any
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
@@ -97,18 +96,19 @@ async def process_intent(audio: UploadFile = File(...)):
     if not audio.filename or not audio.filename.endswith('.wav'):
         raise HTTPException(status_code=400, detail="Invalid file type. Only .wav is allowed.")
 
-    # Save temporary file for processing - use UUID for safety
-    temp_filename = f"temp_{uuid.uuid4()}.wav"
     try:
-        with open(temp_filename, "wb") as buffer:
-            shutil.copyfileobj(audio.file, buffer)
+        audio_bytes = await audio.read()
+        audio_io = io.BytesIO(audio_bytes)
 
         # Requirement 1: Wake Word Detection (always-on trigger)
         # Assuming the trigger is part of the initial streaming stream
-        triggered, ww_ms = get_wakeword().detect(temp_filename)
+        triggered, ww_ms = get_wakeword().detect(audio_io)
+        
+        # Reset pointer for next module
+        audio_io.seek(0)
         
         # 1. ASR (Speech-to-Text) - Requirement 4
-        transcribed_text, asr_ms = get_asr().transcribe(temp_filename)
+        transcribed_text, asr_ms = get_asr().transcribe(audio_io)
 
         # 2. Intent Classification (NLU) - Requirement 6 (8 allowed values)
         intent, confidence, intent_ms = get_nlu().predict(transcribed_text)
@@ -134,10 +134,6 @@ async def process_intent(audio: UploadFile = File(...)):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal Error: {str(e)}")
-    finally:
-        # Cleanup temporary audio file
-        if os.path.exists(temp_filename):
-            os.remove(temp_filename)
 
 if __name__ == "__main__":
     import uvicorn
