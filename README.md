@@ -128,9 +128,11 @@ This pipeline is explicitly designed for **privacy-first, offline environments**
 ## 🚧 Challenges Solved
 Building a local ML pipeline under strict latency constraints introduced two massive challenges:
 
-1. **Docker Image Bloat**: Packaging model weights directly resulted in gigabyte-sized images.
-   - *Solution*: Models (like Piper TTS) securely download their ONNX weights at runtime if they are not found in the local volume, keeping the base image extremely lean.
-2. **Inference Cold Starts**: Loading models into RAM on the first API request caused massive latency spikes.
+1. **Docker Image Mutability**: Relying on runtime downloads for models breaks production reproducibility and causes cold-start delays.
+   - *Solution*: A multi-stage Docker build pre-downloads the required ONNX and `faster-whisper` models directly during the build phase, resulting in a perfectly immutable, self-contained container.
+2. **Inefficient Disk I/O**: Writing temporary audio files to the disk before processing creates a bottleneck under heavy load.
+   - *Solution*: The entire pipeline was refactored to use `io.BytesIO` streams, passing audio data through memory from the FastAPI endpoint down to the TTS generation, eliminating disk writes entirely.
+3. **Inference Cold Starts**: Loading models into RAM on the first API request caused massive latency spikes.
    - *Solution*: An asynchronous `@app.on_event("startup")` hook forces a dummy inference pass, pre-warming all models into RAM before the API ever accepts traffic.
 
 ## 🔮 Limitations & Future Scope
