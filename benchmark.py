@@ -91,10 +91,16 @@ def run_benchmark():
     # Target check
     target_met = report.get("total_ms", {}).get("p95", 9999) < 2000
     
-    if target_met:
-        print("\n✅ SUCCESS: P95 latency is under 2 seconds.")
-    else:
-        print("\n❌ FAILED: P95 latency exceeds 2 seconds.")
+    try:
+        if target_met:
+            print("\n✅ SUCCESS: P95 latency is under 2 seconds.")
+        else:
+            print("\n❌ FAILED: P95 latency exceeds 2 seconds.")
+    except UnicodeEncodeError:
+        if target_met:
+            print("\n[SUCCESS] P95 latency is under 2 seconds.")
+        else:
+            print("\n[FAILED] P95 latency exceeds 2 seconds.")
 
 if __name__ == "__main__":
     run_benchmark()
