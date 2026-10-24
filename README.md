@@ -7,6 +7,10 @@
 
 A production-ready voice assistant pipeline built with FastAPI and containerized with Docker. Designed for sub-2-second latency on standard CPUs using high-performance local AI models.
 
+## 🎥 Project Demo
+
+[![Watch the project demo on YouTube](https://img.youtube.com/vi/H4jSVWNEaZ4/hqdefault.jpg)](https://youtu.be/H4jSVWNEaZ4)
+
 ## 🚀 Key Features
 - **Local Transcription (ASR)**: `faster-whisper` (tiny.en, int8)
 - **Local Intent Classification (NLU)**: Optimized keyword-based heuristic (8 intents)
