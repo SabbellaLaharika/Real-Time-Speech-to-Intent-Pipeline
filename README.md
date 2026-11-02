@@ -9,7 +9,7 @@ A production-ready voice assistant pipeline built with FastAPI and containerized
 
 ## 🎥 Project Demo
 
-[![Watch the project demo on YouTube](https://img.youtube.com/vi/H4jSVWNEaZ4/hqdefault.jpg)](https://youtu.be/H4jSVWNEaZ4)
+[![Watch the project demo on YouTube](https://img.youtube.com/vi/H4jSVWNEaZ4/maxresdefault.jpg)](https://youtu.be/H4jSVWNEaZ4)
 
 ## 🚀 Key Features
 - **Local Transcription (ASR)**: `faster-whisper` (tiny.en, int8)
